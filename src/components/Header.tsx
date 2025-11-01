@@ -6,6 +6,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import ThemeToggle from '@/components/ThemeToggle';
 
 /**
  * Main application header with navigation
@@ -33,31 +34,38 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive(item.path) ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              {item.name}
+        <div className="hidden md:flex items-center gap-6">
+          <nav className="flex items-center space-x-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive(item.path) ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link to="/mind-maps">
+              <Button>Create Mind Map</Button>
             </Link>
-          ))}
-          <Link to="/mind-maps">
-            <Button className="ml-4">Create Mind Map</Button>
-          </Link>
-        </nav>
+          </div>
+        </div>
 
         {/* Mobile Navigation */}
-        <Sheet>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
+        <div className="flex md:hidden items-center gap-2">
+          <ThemeToggle />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
           <SheetContent side="right">
             <div className="flex flex-col space-y-4 mt-6">
               {navItems.map((item) => (
@@ -76,7 +84,8 @@ export default function Header() {
               </Link>
             </div>
           </SheetContent>
-        </Sheet>
+          </Sheet>
+        </div>
       </div>
     </header>
   );
