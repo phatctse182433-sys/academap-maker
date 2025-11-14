@@ -10,8 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import MindMapCard from '@/components/MindMapCard';
-import { useMindMapContext } from '@/store/MindMapContext';
-import { SUBJECTS } from '@/types/mindmap';
+import { SUBJECTS, MindMap } from '@/types/mindmap';
 import MainLayout from '@/layouts/MainLayout';
 import {
   Dialog,
@@ -30,7 +29,8 @@ import { toast } from 'sonner';
  * Page displaying list of all mind maps with search and filter
  */
 export default function MindMapListPage() {
-  const { mindMaps, addMindMap, deleteMindMap } = useMindMapContext();
+  // Mock data for now - will be replaced with actual API calls
+  const [mindMaps, setMindMaps] = useState<MindMap[]>([]);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterSubject, setFilterSubject] = useState('all');
@@ -79,6 +79,20 @@ export default function MindMapListPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isScrolling, filteredMindMaps.length]);
+  // Local functions to replace context methods
+  const addMindMap = (newMindMap: Omit<MindMap, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const mindMap: MindMap = {
+      ...newMindMap,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    setMindMaps(prev => [...prev, mindMap]);
+  };
+
+  const deleteMindMap = (id: string) => {
+    setMindMaps(prev => prev.filter(mm => mm.id !== id));
+  };
 
   const handleCreateMindMap = () => {
     if (!newTitle.trim()) {

@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { User, Mail, Calendar, MapPin, Settings, BookOpen, Brain, Trophy, Clock, Wallet, DollarSign, History, Package, CreditCard } from 'lucide-react';
+import { User, Mail, Calendar, MapPin, Settings, BookOpen, Brain, Trophy, Clock, Wallet, DollarSign, History, Package, CreditCard, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import MainLayout from '@/layouts/MainLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -26,11 +27,10 @@ export default function UserProfilePage() {
   const { isAuthenticated, userEmail, loading, logout, isUser } = useAuth();  // Wallet state
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
-
   // Transaction history state
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
-  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
   // Function to fetch wallet data
   const fetchWalletData = async (userId: number) => {
@@ -64,7 +64,6 @@ export default function UserProfilePage() {
       setWalletLoading(false);
     }
   };
-
   // Function to fetch transaction history
   const fetchTransactionHistory = async (walletId: number) => {
     setTransactionsLoading(true);
@@ -77,7 +76,7 @@ export default function UserProfilePage() {
           (transaction: TransactionData) => transaction.status === 'SUCCESS'
         );
         setTransactions(successfulTransactions);
-        setShowTransactionHistory(true);
+        setIsTransactionModalOpen(true); // Open modal instead of inline display
       } else {
         throw new Error(result.data.message || 'Failed to fetch transaction history');
       }
@@ -406,113 +405,150 @@ export default function UserProfilePage() {
                       </Button>
                     </div>                  )}
                 </CardContent>
-              </Card>
-
-              {/* Transaction History */}
-              {showTransactionHistory && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <History className="h-5 w-5" />
-                      Transaction History
-                    </CardTitle>
-                    <CardDescription>
-                      Your successful transactions and deposits
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {transactions.length === 0 ? (
-                      <div className="text-center py-8">
-                        <History className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          No successful transactions found
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {transactions.map((transaction) => (
-                          <div 
-                            key={transaction.transactionId}
-                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                transaction.type === 'DEPOSIT' 
-                                  ? 'bg-green-100 dark:bg-green-900/20' 
-                                  : 'bg-purple-100 dark:bg-purple-900/20'
-                              }`}>
-                                {transaction.type === 'DEPOSIT' ? (
-                                  <DollarSign className={`h-5 w-5 ${
-                                    transaction.type === 'DEPOSIT' 
-                                      ? 'text-green-600 dark:text-green-400' 
-                                      : 'text-purple-600 dark:text-purple-400'
-                                  }`} />
-                                ) : (
-                                  <Package className={`h-5 w-5 ${
-                                    transaction.type === 'DEPOSIT' 
-                                      ? 'text-green-600 dark:text-green-400' 
-                                      : 'text-purple-600 dark:text-purple-400'
-                                  }`} />
-                                )}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium">
-                                    {transaction.type === 'DEPOSIT' ? 'Deposit' : 'Package Purchase'}
-                                  </p>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {transaction.type}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span>ID: #{transaction.transactionId}</span>
-                                  {transaction.orderId && (
-                                    <>
-                                      <span>•</span>
-                                      <span>Order: #{transaction.orderId}</span>
-                                    </>
-                                  )}
-                                  <span>•</span>
-                                  <span>{new Date(transaction.createdAt).toLocaleDateString()}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="flex items-center gap-2">
-                                <span className={`font-bold ${
-                                  transaction.type === 'DEPOSIT' 
-                                    ? 'text-green-600 dark:text-green-400' 
-                                    : 'text-purple-600 dark:text-purple-400'
-                                }`}>
-                                  {transaction.type === 'DEPOSIT' ? '+' : '-'}${transaction.amount}
-                                </span>
-                              </div>
-                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs">
-                                {transaction.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Close Button */}
-                    <div className="pt-4 border-t">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowTransactionHistory(false)}
-                        className="w-full"
-                      >
-                        Close History
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+              </Card>            </div>
           </div>
         </div>
       </section>
+
+      {/* Transaction History Modal */}
+      <Dialog open={isTransactionModalOpen} onOpenChange={setIsTransactionModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Transaction History
+            </DialogTitle>
+            <DialogDescription>
+              Your successful transactions and deposits
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-6">
+            {transactionsLoading ? (
+              <div className="text-center py-12">
+                <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading transactions...</p>
+              </div>
+            ) : transactions.length === 0 ? (
+              <div className="text-center py-12">
+                <History className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-semibold text-lg mb-2">No Transactions Found</h3>
+                <p className="text-muted-foreground">
+                  You haven't made any successful transactions yet.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-4 px-4 py-3 text-sm font-medium text-muted-foreground uppercase tracking-wider bg-muted/50 rounded-t-lg border-b">
+                  <div className="col-span-1">Type</div>
+                  <div className="col-span-5">Transaction Details</div>
+                  <div className="col-span-3 text-center">Date</div>
+                  <div className="col-span-3 text-right">Amount</div>
+                </div>
+
+                {/* Transaction List */}
+                <div className="border rounded-b-lg divide-y">
+                  {transactions.map((transaction) => (
+                    <div 
+                      key={transaction.transactionId}
+                      className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/30 transition-colors items-center"
+                    >
+                      {/* Type Icon */}
+                      <div className="col-span-1">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          transaction.type === 'DEPOSIT' 
+                            ? 'bg-green-100 dark:bg-green-900/20' 
+                            : 'bg-purple-100 dark:bg-purple-900/20'
+                        }`}>
+                          {transaction.type === 'DEPOSIT' ? (
+                            <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Transaction Details */}
+                      <div className="col-span-5">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-sm">
+                            {transaction.type === 'DEPOSIT' ? 'Account Deposit' : 'Package Purchase'}
+                          </h4>
+                          <Badge variant="outline" className="text-xs">
+                            {transaction.type}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">
+                            Transaction ID: #{transaction.transactionId}
+                          </p>
+                          {transaction.orderId && (
+                            <p className="text-xs text-muted-foreground">
+                              Order ID: #{transaction.orderId}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Date */}
+                      <div className="col-span-3 text-center">
+                        <div className="text-sm font-medium">
+                          {new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(transaction.createdAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Amount & Status */}
+                      <div className="col-span-3 text-right">
+                        <div className="mb-1">
+                          <span className={`font-bold text-lg ${
+                            transaction.type === 'DEPOSIT' 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-red-600 dark:text-red-400'
+                          }`}>
+                            {transaction.type === 'DEPOSIT' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                          </span>
+                        </div>
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs">
+                          ✓ {transaction.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Transaction Summary */}
+                <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                        {transactions.filter(t => t.type === 'DEPOSIT').length}
+                      </div>
+                      <div className="text-muted-foreground">Deposits</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                        {transactions.filter(t => t.type === 'PURCHASE').length}
+                      </div>
+                      <div className="text-muted-foreground">Purchases</div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Recent Activity Section */}
       <section className="py-20 md:py-32 bg-muted/50">
