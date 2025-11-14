@@ -14,6 +14,7 @@ export const apiConfig = {
 // JWT Token interface
 export interface DecodedToken {
   sub: string; // email
+  userId?: number; // user ID if available in token
   role: Array<{ authority: string }>;
   iat: number;
   exp: number;
@@ -40,10 +41,14 @@ export const tokenUtils = {
     const decoded = tokenUtils.decode(token);
     return decoded.exp * 1000 < Date.now();
   },
-  
-  getUserEmail: (token: string): string => {
+    getUserEmail: (token: string): string => {
     const decoded = tokenUtils.decode(token);
     return decoded.sub;
+  },
+  
+  getUserId: (token: string): number | null => {
+    const decoded = tokenUtils.decode(token);
+    return decoded.userId || null;
   },
   
   store: (token: string) => {
@@ -107,13 +112,11 @@ export const authAPI = {
       
       // Store token in localStorage
       tokenUtils.store(result.accessToken);
-      
-      return { success: true, data: result };
+        return { success: true, data: result };
     } catch (error) {
       console.error('Login API error:', error);
       throw error;
-    }
-  },
+    }  },
 };
 
 // General API utility functions

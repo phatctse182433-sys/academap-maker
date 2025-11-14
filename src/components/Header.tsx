@@ -22,10 +22,9 @@ import { useAuth } from '@/hooks/useAuth';
 export default function Header() {
   const location = useLocation();
   const { isAuthenticated, userEmail, logout, loading } = useAuth();
-  
-  const navItems = [
+    const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Docs', path: '/about' },
+    { name: 'Subscription', path: '/subscription' },
     { name: 'Showcase', path: '/mind-maps' },
   ];
 

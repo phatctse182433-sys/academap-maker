@@ -13,6 +13,9 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import AdminPage from "./pages/AdminPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import SubscriptionPage from "./pages/SubscriptionPage";
+import DepositPage from "./pages/DepositPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,10 +31,13 @@ const App = () => (
               <Route path="/" element={<HomePage />} />
               <Route path="/mind-maps" element={<MindMapListPage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/subscription" element={<SubscriptionPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/profile" element={<UserProfilePage />} />
+              <Route path="/deposit" element={<DepositPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/mind-map/editor/:id?" element={<MindMapEditorPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
