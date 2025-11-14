@@ -137,5 +137,269 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* React Bits inspired navigation styles */
+  .nav-blur {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .gradient-purple-blue {
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  }
+  
+  .gradient-text-purple-blue {
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Custom hover effects for navigation items */
+  .nav-item {
+    position: relative;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    border-radius: 1px;
+    transform: scaleX(0);
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .nav-item.active::after {
+    transform: scaleX(1);
+  }
+  
+  .nav-item:hover::after {
+    transform: scaleX(1);
+  }
+  
+  /* GitHub star button animation */
+  .github-star-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .github-star-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .github-star-btn:hover::before {
+    left: 100%;
+  }
+  
+  /* Create button gradient animation */
+  .create-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .create-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .create-btn:hover::before {
+    opacity: 1;
+  }
+  
+  .create-btn > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Custom styles cho header trong suốt */
+  .glass-header {
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .glass-header {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Navigation pill effect */
+  .nav-pill {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-pill.active {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Button glass effect */
+  .glass-button {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    background: rgba(147, 51, 234, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass-button:hover {
+    background: rgba(147, 51, 234, 0.3);
+    border-color: rgba(147, 51, 234, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(147, 51, 234, 0.2);
+  }
+  /* Scroll Stack Animation Styles */
+  .scroll-stack-container {
+    perspective: 1000px;
+    overflow-x: hidden;
+  }
+  
+  .scroll-stack-item {
+    transform-style: preserve-3d;
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform, opacity;
+  }
+  
+  .scroll-stack-item:hover {
+    transform: translateY(var(--translate-y, 0)) scale(var(--scale, 1)) translateZ(20px) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  }
+  
+  .scroll-stack-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 1.5rem;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  .scroll-stack-item:hover::before {
+    opacity: 0.8;
+  }
+  
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Stack container specific styles */
+  .scroll-stack-wrapper {
+    transform-style: preserve-3d;
+  }
+  
+  /* Gradient animation */
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .scroll-stack-item .bg-gradient-to-br {
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+  }
+
+  /* Shimmer animation */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) skewX(-12deg);
+    }
+    100% {
+      transform: translateX(200%) skewX(-12deg);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s infinite;
+  }
+
+  /* Prevent body scroll for scroll stack page */
+  .scroll-stack-page {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Scroll Stack Animation Styles */
+  .scroll-stack-container {
+    perspective: 1000px;
+    user-select: none;
+  }
+  
+  .scroll-stack-item {
+    transform-style: preserve-3d;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform, opacity;
+  }
+  
+  .scroll-stack-item:hover {
+    transform: translateY(var(--translate-y, 0)) scale(var(--scale, 1)) translateZ(20px) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  
+  .scroll-stack-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 1.5rem;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+  }
+  
+  .scroll-stack-item:hover::before {
+    opacity: 0.8;
+  }
+  
+  /* Shimmer animation */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) skewX(-12deg);
+    }
+    100% {
+      transform: translateX(200%) skewX(-12deg);
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 3s ease-in-out infinite;
   }
 }

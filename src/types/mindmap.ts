@@ -43,4 +43,5 @@ export const SUBJECTS: Subject[] = [
   { id: 'english', name: 'English', color: 'hsl(25, 95%, 53%)', icon: '✍️' },
   { id: 'physics', name: 'Physics', color: 'hsl(0, 84%, 60%)', icon: '⚛️' },
   { id: 'chemistry', name: 'Chemistry', color: 'hsl(142, 71%, 45%)', icon: '🧪' },
+  { id: 'history', name: 'History', color: 'hsl(45, 93%, 47%)', icon: '🏛️' },
 ];
