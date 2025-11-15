@@ -31,9 +31,8 @@ interface PackagesResponse {
 export default function SubscriptionPage() {
   const [packages, setPackages] = useState<SimplePackageData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processingPackageId, setProcessingPackageId] = useState<number | null>(null);
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const [processingPackageId, setProcessingPackageId] = useState<number | null>(null);  const navigate = useNavigate();
+  const { isAuthenticated, userId } = useAuth();
 
   useEffect(() => {
     fetchPackages();
@@ -115,17 +114,13 @@ export default function SubscriptionPage() {
       default:
         return 'from-gray-500 to-gray-600';
     }
-  };
-  const handleChoosePackage = async (pkg: SimplePackageData) => {
+  };  const handleChoosePackage = async (pkg: SimplePackageData) => {
     // Check if user is authenticated
     if (!isAuthenticated) {
       toast.error('Please login to purchase a package');
       navigate('/login');
       return;
-    }
-
-    const userId = OrderAPI.getUserIdFromToken();
-    if (!userId) {
+    }    if (!userId) {
       toast.error('Unable to get user information. Please login again.');
       return;
     }

@@ -44,8 +44,7 @@ export const tokenUtils = {
     getUserEmail: (token: string): string => {
     const decoded = tokenUtils.decode(token);
     return decoded.sub;
-  },
-    getUserId: (token: string): number | null => {
+  },  getUserId: (token: string): number | null => {
     const decoded = tokenUtils.decode(token);
     return decoded.id || null;
   },

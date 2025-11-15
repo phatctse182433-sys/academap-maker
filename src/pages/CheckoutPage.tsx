@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import OrderAPI, { OrderData, handleAPIError, isNetworkError } from '@/service/orderAPI';
 import TransactionAPI, { TransactionData } from '@/service/transactionAPI';
+import { tokenUtils } from '@/service/api';
 
 // Order response interfaces
 interface OrderPackage {
@@ -67,16 +68,49 @@ export default function CheckoutPage() {
   
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [transactionData, setTransactionData] = useState<TransactionData | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [walletId, setWalletId] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
 
   // Get data from navigation state
-  const state = location.state as CheckoutState;  const packageData = state?.packageData;
-  const existingOrderData = state?.orderData;
+  const state = location.state as CheckoutState;  const packageData = state?.packageData;  const existingOrderData = state?.orderData;
   const isOrderAlreadyComplete = state?.orderComplete || false;
   
-  // Redirect if not authenticated or no data
+  // Function to fetch wallet data for current user
+  const fetchWalletData = async () => {
+    if (!userId) return;
+    
+    try {
+      const token = tokenUtils.get();
+      const response = await fetch(`http://localhost:8080/api/wallets/user/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch wallet: ${response.status}`);
+      }
+
+      const walletData = await response.json();
+      setWalletBalance(walletData.balance);
+      setWalletId(walletData.walletId);
+      
+      console.log('Fetched wallet data:', {
+        walletId: walletData.walletId,
+        balance: walletData.balance,
+        userId
+      });
+    } catch (error) {
+      console.error('Error fetching wallet:', error);
+      toast.error('Failed to load wallet information');
+    }
+  };
+    // Redirect if not authenticated or no data
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate('/login');
@@ -88,27 +122,37 @@ export default function CheckoutPage() {
       navigate('/subscription');
       return;
     }
-      // If order is already complete from subscription page
+    
+    // If order is already complete from subscription page
     if (isOrderAlreadyComplete && existingOrderData) {
       setOrderData(existingOrderData);
       setOrderComplete(true);
     }
-  }, [isAuthenticated, loading, packageData, existingOrderData, isOrderAlreadyComplete, navigate]);  const handlePayment = async () => {
+  }, [isAuthenticated, loading, packageData, existingOrderData, isOrderAlreadyComplete, navigate]);
+  
+  // Fetch wallet data when component mounts or order completes
+  useEffect(() => {
+    if (userId && isAuthenticated) {
+      fetchWalletData();
+    }
+  }, [userId, isAuthenticated, orderComplete]);  const handlePayment = async () => {
     if (!orderData) {
       toast.error('No order data found');
       return;
     }
 
-    if (!orderData.user.wallet) {
+    if (!walletId) {
       toast.error('No wallet found for user');
       return;
-    }    // Add balance check
+    }
+
+    // Use wallet balance from state instead of order data
     const packagePrice = orderData.packages.price;
-    const walletBalance = orderData.user.wallet.balance;
     
     console.log('Payment check:', {
       packagePrice,
       walletBalance,
+      walletId,
       hasEnoughBalance: walletBalance >= packagePrice
     });
 
@@ -122,7 +166,7 @@ export default function CheckoutPage() {
     try {
       const paymentRequest = {
         orderId: orderData.orderId,
-        walletId: orderData.user.wallet.walletId
+        walletId: walletId
       };
 
       console.log('Processing payment with request:', paymentRequest);
@@ -135,6 +179,8 @@ export default function CheckoutPage() {
       if (result.success && result.data.code === 200) {
         setTransactionData(result.data.data);
         setPaymentComplete(true);
+        // Refresh wallet balance after successful payment
+        fetchWalletData();
         toast.success('Payment processed successfully! Package is now active.');
       } else {
         throw new Error(result.data.message || 'Failed to process payment');
@@ -151,7 +197,7 @@ export default function CheckoutPage() {
     } finally {
       setIsProcessing(false);
     }
-  };  const handlePurchase = async () => {
+  };const handlePurchase = async () => {
     if (!packageData) return;
 
     if (!userId) {
@@ -168,11 +214,7 @@ export default function CheckoutPage() {
         status: 'PENDING'
       };
 
-      console.log('Creating order with request:', orderRequest);
-
       const result = await OrderAPI.createOrder(orderRequest);
-      
-      console.log('Order creation result:', result);
       
       if (result.success && result.data.code === 200) {
         setOrderData(result.data.data);
@@ -458,27 +500,23 @@ export default function CheckoutPage() {
                           <span>{formatDurationDate(orderData.packages.durationDays)}</span>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Wallet Balance Info */}
-                    {orderData.user.wallet && (
-                      <div className="pt-4 border-t">
-                        <h4 className="font-semibold mb-3">Wallet Information:</h4>
-                        <div className="p-4 bg-muted/50 rounded-lg">
-                          <div className="flex justify-between items-center">
-                            <span>Current Balance:</span>
-                            <Badge variant="outline" className="text-lg font-bold">
-                              ${orderData.user.wallet.balance}
-                            </Badge>
-                          </div>
-                          {orderData.user.wallet.balance < orderData.packages.price && (
-                            <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                              Insufficient balance. Please add funds to your wallet first.
-                            </p>
-                          )}
+                    </div>                    {/* Wallet Balance Info */}
+                    <div className="pt-4 border-t">
+                      <h4 className="font-semibold mb-3">Wallet Information:</h4>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span>Current Balance:</span>
+                          <Badge variant="outline" className="text-lg font-bold">
+                            ${walletBalance}
+                          </Badge>
                         </div>
+                        {walletBalance < orderData.packages.price && (
+                          <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                            Insufficient balance. Please add funds to your wallet first.
+                          </p>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -522,11 +560,9 @@ export default function CheckoutPage() {
                           </p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Action Buttons */}
+                    </div>                    {/* Action Buttons */}
                     <div className="space-y-3">
-                      {orderData.user.wallet && orderData.user.wallet.balance >= orderData.packages.price ? (
+                      {walletBalance >= orderData.packages.price ? (
                         <Button
                           onClick={handlePayment}
                           className="w-full h-12 text-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
