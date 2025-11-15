@@ -9,7 +9,7 @@ import { ArrowLeft, DollarSign, CreditCard, Shield, CheckCircle, AlertCircle } f
 import MainLayout from '@/layouts/MainLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { handleAPIError, isNetworkError, tokenUtils } from '@/lib/api';
+import { handleAPIError, isNetworkError, tokenUtils } from '@/service/api';
 
 // Deposit request interface
 interface DepositRequest {
@@ -30,35 +30,14 @@ interface WalletResponse {
  * Deposit page for adding funds to user wallet
  */
 export default function DepositPage() {
-  const { isAuthenticated, userEmail, loading } = useAuth();
+  const { isAuthenticated, userEmail, userId, loading } = useAuth();
   const navigate = useNavigate();
   
   const [amount, setAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositSuccess, setDepositSuccess] = useState(false);
-
   // Quick amount options
   const quickAmounts = [10, 25, 50, 100, 200, 500];
-  // Get userId from token
-  const getUserIdFromToken = (): number | null => {
-    const token = tokenUtils.get();
-    if (!token) return null;
-    
-    try {
-      const decoded = tokenUtils.decode(token);
-      // If userId is in token, use it; otherwise use hardcoded value for testing
-      if (decoded.userId) {
-        return decoded.userId;
-      }
-      
-      // For testing purposes, use hardcoded userId
-      // In production, you might need to call a separate API to get userId by email
-      return 2; // Using the same userId as in wallet fetch
-    } catch (error) {
-      console.error('Failed to get userId from token:', error);
-      return null;
-    }
-  };
 
   const handleQuickAmount = (quickAmount: number) => {
     setAmount(quickAmount.toString());
@@ -74,13 +53,11 @@ export default function DepositPage() {
       toast.error('Please enter a valid amount');
       return;
     }
-    
-    if (depositAmount > 10000) {
+      if (depositAmount > 10000) {
       toast.error('Maximum deposit amount is $10,000');
       return;
     }
 
-    const userId = getUserIdFromToken();
     if (!userId) {
       toast.error('Unable to get user information. Please login again.');
       return;

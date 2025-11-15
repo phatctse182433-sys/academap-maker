@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { tokenUtils } from "@/lib/api";
+import { tokenUtils } from "@/service/api";
 
 export const AdminOnlyRoute = ({ children }: any) => {
   const token = tokenUtils.get();

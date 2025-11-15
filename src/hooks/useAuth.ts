@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { tokenUtils } from '@/lib/api';
+import { tokenUtils } from '@/service/api';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -24,15 +25,15 @@ export const useAuth = () => {
           setIsAuthenticated(false);
           setLoading(false);
           return;
-        }
-
-        // Token is valid
+        }        // Token is valid
         const role = tokenUtils.getUserRole(token);
         const email = tokenUtils.getUserEmail(token);
+        const id = tokenUtils.getUserId(token);
         
         setIsAuthenticated(true);
         setUserRole(role);
         setUserEmail(email);
+        setUserId(id);
         setLoading(false);
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -44,19 +45,19 @@ export const useAuth = () => {
 
     checkAuth();
   }, []);
-
   const logout = () => {
     tokenUtils.remove();
     setIsAuthenticated(false);
     setUserRole('');
     setUserEmail('');
+    setUserId(null);
     window.location.href = '/login';
   };
-
   return {
     isAuthenticated,
     userRole,
     userEmail,
+    userId,
     loading,
     logout,
     isAdmin: userRole === 'ROLE_ADMIN',

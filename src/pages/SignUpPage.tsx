@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, UserCircle } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
 import { toast } from 'sonner';
-import { authAPI, handleAPIError, isNetworkError } from '@/lib/api';
+import { authAPI, handleAPIError, isNetworkError } from '@/service/api';
 
 /**
  * Sign up page with email, full name, username, and password

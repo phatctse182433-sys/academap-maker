@@ -5,36 +5,31 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Zap, Users } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
 import { toast } from 'sonner';
-import { handleAPIError, isNetworkError } from '@/lib/api';
+import { handleAPIError, isNetworkError, tokenUtils } from '@/service/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import OrderAPI from '@/lib/orderAPI';
+import OrderAPI from '@/service/orderAPI';
 
-// Interfaces for API response
-interface PackageData {
+// Simple package interface for filtered data
+interface SimplePackageData {
   packageId: number;
   name: string;
   price: number;
   apiCallLimit: string;
-  durationDays: string;
-  createdAt: string;
-  updatedAt: string;
-  category: string | null;
-  templates: any[];
-  apiKeys: any[];
+  durationDate: string | null; // Formatted duration date
 }
 
 interface PackagesResponse {
   code: number;
   message: string;
-  data: PackageData[];
+  data: any[]; // Raw API data
 }
 
 /**
  * Subscription packages page with pricing and features
  */
 export default function SubscriptionPage() {
-  const [packages, setPackages] = useState<PackageData[]>([]);
+  const [packages, setPackages] = useState<SimplePackageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPackageId, setProcessingPackageId] = useState<number | null>(null);
   const navigate = useNavigate();
@@ -43,29 +38,48 @@ export default function SubscriptionPage() {
   useEffect(() => {
     fetchPackages();
   }, []);
-
   const fetchPackages = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/packages/all', {
+      const token = tokenUtils.get();      const response = await fetch('http://localhost:8080/api/packages/all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || `HTTP error! status: ${response.status}`);
-      }
-
-      const result: PackagesResponse = await response.json();
+      }      const result = await response.json();
       
-      if (result.code === 200) {
-        setPackages(result.data);
+      // Check if result has the expected structure
+      let packagesData;
+      if (result.code === 200 && Array.isArray(result.data)) {
+        packagesData = result.data;
+      } else if (Array.isArray(result)) {
+        // Direct array response
+        packagesData = result;
       } else {
-        throw new Error(result.message || 'Failed to fetch packages');
+        console.error('Unexpected response structure:', result);
+        throw new Error(`Unexpected response format. Received: ${JSON.stringify(result)}`);
       }
+      
+      // Filter and format the data according to requirements
+      const filteredPackages: SimplePackageData[] = packagesData.map((pkg: any) => ({
+        packageId: pkg.packageId,
+        name: pkg.name,
+        price: pkg.price,
+        apiCallLimit: pkg.apiCallLimit,
+        durationDate: pkg.durationDays ? new Date(pkg.durationDays).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : null
+      }));
+      
+      setPackages(filteredPackages);
     } catch (error) {
       console.error('Fetch packages error:', error);
       
@@ -78,20 +92,6 @@ export default function SubscriptionPage() {
       setLoading(false);
     }
   };
-
-  const formatDurationDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return 'Invalid date';
-    }
-  };
-
   const getPackageIcon = (packageName: string) => {
     switch (packageName.toLowerCase()) {
       case 'basic':
@@ -116,7 +116,7 @@ export default function SubscriptionPage() {
         return 'from-gray-500 to-gray-600';
     }
   };
-  const handleChoosePackage = async (pkg: PackageData) => {
+  const handleChoosePackage = async (pkg: SimplePackageData) => {
     // Check if user is authenticated
     if (!isAuthenticated) {
       toast.error('Please login to purchase a package');
@@ -144,8 +144,7 @@ export default function SubscriptionPage() {
       
       if (result.success && result.data.code === 200) {
         toast.success(`Order for ${pkg.name} package created successfully!`);
-        
-        // Navigate to checkout with order data to show success
+          // Navigate to checkout with order data to show success
         navigate('/checkout', {
           state: {
             orderData: result.data.data,
@@ -154,7 +153,7 @@ export default function SubscriptionPage() {
               name: pkg.name,
               price: pkg.price,
               apiCallLimit: pkg.apiCallLimit,
-              durationDays: pkg.durationDays,
+              durationDate: pkg.durationDate,
             },
             orderComplete: true
           }
@@ -280,9 +279,8 @@ export default function SubscriptionPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
                           <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        </div>
-                        <span className="text-sm">
-                          Valid until <span className="font-semibold">{formatDurationDate(pkg.durationDays)}</span>
+                        </div>                        <span className="text-sm">
+                          Valid until <span className="font-semibold">{pkg.durationDate || 'No expiration'}</span>
                         </span>
                       </div>
 

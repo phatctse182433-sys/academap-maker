@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { User, Mail, Calendar, MapPin, Settings, BookOpen, Brain, Trophy, Clock, Wallet, DollarSign, History, Package, CreditCard, X } from 'lucide-react';
+import { User, Mail, Calendar, MapPin, Settings, BookOpen, Brain, Clock, Wallet, DollarSign, History, Package, CreditCard, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import MainLayout from '@/layouts/MainLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { handleAPIError, isNetworkError, tokenUtils } from '@/lib/api';
-import TransactionAPI, { TransactionData } from '@/lib/transactionAPI';
+import { handleAPIError, isNetworkError, tokenUtils } from '@/service/api';
+import TransactionAPI, { TransactionData } from '@/service/transactionAPI';
 
 // Wallet data interface
 interface WalletData {
@@ -24,7 +24,7 @@ interface WalletData {
  * User profile page with personal information and statistics
  */
 export default function UserProfilePage() {
-  const { isAuthenticated, userEmail, loading, logout, isUser } = useAuth();  // Wallet state
+  const { isAuthenticated, userEmail, userId, loading, logout, isUser } = useAuth();// Wallet state
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
   // Transaction history state
@@ -98,14 +98,11 @@ export default function UserProfilePage() {
     if (!loading && !isAuthenticated) {
       window.location.href = '/login';
     }
-    
-    // Fetch wallet data when authenticated
-    if (!loading && isAuthenticated) {
-      // For now, using userId = 2 as in your example
-      // In production, you would get this from user info API or token
-      fetchWalletData(2);
+      // Fetch wallet data when authenticated
+    if (!loading && isAuthenticated && userId) {
+      fetchWalletData(userId);
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, userId]);
 
   // Show loading while checking authentication
   if (loading) {
@@ -120,21 +117,10 @@ export default function UserProfilePage() {
       </MainLayout>
     );
   }
-
   // Don't render content if not authenticated
   if (!isAuthenticated) {
     return null;
   }
-
-  // Mock user data - in real app, this would come from API
-  const userStats = {
-    mindMapsCreated: 12,
-    totalStudyTime: '45h 30m',
-    completedTopics: 28,
-    achievements: 5,
-    joinedDate: 'January 2024',
-    lastActive: '2 hours ago'
-  };
 
   return (
     <MainLayout>
@@ -176,66 +162,11 @@ export default function UserProfilePage() {
             </div>
           </div>
         </div>
-        
-        {/* Background decoration */}
+          {/* Background decoration */}
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-purple-500/5 to-transparent opacity-20"></div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 md:py-32 bg-muted/50">
-        <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-              Your Learning Journey
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Track your progress and achievements in your learning journey
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <Brain className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                <CardTitle className="text-2xl font-bold">{userStats.mindMapsCreated}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Mind Maps Created</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <Clock className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                <CardTitle className="text-2xl font-bold">{userStats.totalStudyTime}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Total Study Time</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <BookOpen className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <CardTitle className="text-2xl font-bold">{userStats.completedTopics}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Completed Topics</p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                <CardTitle className="text-2xl font-bold">{userStats.achievements}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Achievements</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>      {/* Profile Info Section */}
+      {/* Profile Info Section */}
       <section className="py-20 md:py-32">
         <div className="container">
           <div className="max-w-6xl mx-auto">
@@ -259,12 +190,11 @@ export default function UserProfilePage() {
                       <p className="text-sm text-muted-foreground">{userEmail}</p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Member Since</p>
-                      <p className="text-sm text-muted-foreground">{userStats.joinedDate}</p>
+                      <p className="text-sm text-muted-foreground">January 2024</p>
                     </div>
                   </div>
 
@@ -272,7 +202,7 @@ export default function UserProfilePage() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Last Active</p>
-                      <p className="text-sm text-muted-foreground">{userStats.lastActive}</p>
+                      <p className="text-sm text-muted-foreground">2 hours ago</p>
                     </div>
                   </div>
 
@@ -394,11 +324,10 @@ export default function UserProfilePage() {
                       <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
                       <p className="text-sm text-muted-foreground">
                         Unable to load wallet information
-                      </p>
-                      <Button 
+                      </p>                      <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => fetchWalletData(2)}
+                        onClick={() => userId && fetchWalletData(userId)}
                         className="mt-2"
                       >
                         Retry

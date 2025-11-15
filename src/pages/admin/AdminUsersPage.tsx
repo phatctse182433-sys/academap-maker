@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { adminUserApi } from "@/lib/admin/user";
+import { adminUserApi } from "@/service/admin/user";
 
 const avatarBg = (s: string) => {
   const colors = ["bg-indigo-500", "bg-emerald-500", "bg-rose-500", "bg-sky-500", "bg-yellow-500"];

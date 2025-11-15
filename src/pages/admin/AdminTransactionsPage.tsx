@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { adminTransactionApi } from "@/lib/admin/transaction";
+import { adminTransactionApi } from "@/service/admin/transaction";
 
 const currency = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 

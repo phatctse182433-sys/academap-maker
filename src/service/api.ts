@@ -14,7 +14,7 @@ export const apiConfig = {
 // JWT Token interface
 export interface DecodedToken {
   sub: string; // email
-  userId?: number; // user ID if available in token
+  id?: number; // user ID from token
   role: Array<{ authority: string }>;
   iat: number;
   exp: number;
@@ -45,10 +45,9 @@ export const tokenUtils = {
     const decoded = tokenUtils.decode(token);
     return decoded.sub;
   },
-  
-  getUserId: (token: string): number | null => {
+    getUserId: (token: string): number | null => {
     const decoded = tokenUtils.decode(token);
-    return decoded.userId || null;
+    return decoded.id || null;
   },
   
   store: (token: string) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { adminDashboardApi } from "@/lib/admin/dashboard";
+import { adminDashboardApi } from "@/service/admin/dashboard";
 
 const formatNumber = (n: number) => (n ?? 0).toLocaleString();
 

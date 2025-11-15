@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
-import { tokenUtils } from "@/lib/api";
+import { tokenUtils } from "@/service/api";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 const AdminLayout = () => {

@@ -7,8 +7,8 @@ import { ArrowLeft, CheckCircle, Package, CreditCard, Shield, Clock, Wallet } fr
 import MainLayout from '@/layouts/MainLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import OrderAPI, { OrderData, handleAPIError, isNetworkError } from '@/lib/orderAPI';
-import TransactionAPI, { TransactionData } from '@/lib/transactionAPI';
+import OrderAPI, { OrderData, handleAPIError, isNetworkError } from '@/service/orderAPI';
+import TransactionAPI, { TransactionData } from '@/service/transactionAPI';
 
 // Order response interfaces
 interface OrderPackage {
@@ -61,7 +61,7 @@ interface CheckoutState {
  * Checkout page for package purchase with complete payment processing
  */
 export default function CheckoutPage() {
-  const { isAuthenticated, userEmail, loading } = useAuth();
+  const { isAuthenticated, userEmail, userId, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -72,14 +72,10 @@ export default function CheckoutPage() {
   const [paymentComplete, setPaymentComplete] = useState(false);
 
   // Get data from navigation state
-  const state = location.state as CheckoutState;
-  const packageData = state?.packageData;
+  const state = location.state as CheckoutState;  const packageData = state?.packageData;
   const existingOrderData = state?.orderData;
   const isOrderAlreadyComplete = state?.orderComplete || false;
-  // Get userId from token
-  const getUserIdFromToken = (): number | null => {
-    return OrderAPI.getUserIdFromToken();
-  };
+  
   // Redirect if not authenticated or no data
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -97,8 +93,7 @@ export default function CheckoutPage() {
       setOrderData(existingOrderData);
       setOrderComplete(true);
     }
-  }, [isAuthenticated, loading, packageData, existingOrderData, isOrderAlreadyComplete, navigate]);
-  const handlePayment = async () => {
+  }, [isAuthenticated, loading, packageData, existingOrderData, isOrderAlreadyComplete, navigate]);  const handlePayment = async () => {
     if (!orderData) {
       toast.error('No order data found');
       return;
@@ -106,6 +101,19 @@ export default function CheckoutPage() {
 
     if (!orderData.user.wallet) {
       toast.error('No wallet found for user');
+      return;
+    }    // Add balance check
+    const packagePrice = orderData.packages.price;
+    const walletBalance = orderData.user.wallet.balance;
+    
+    console.log('Payment check:', {
+      packagePrice,
+      walletBalance,
+      hasEnoughBalance: walletBalance >= packagePrice
+    });
+
+    if (walletBalance < packagePrice) {
+      toast.error(`Insufficient wallet balance. You have $${walletBalance}, but need $${packagePrice}`);
       return;
     }
 
@@ -118,8 +126,11 @@ export default function CheckoutPage() {
       };
 
       console.log('Processing payment with request:', paymentRequest);
+      console.log('Order data:', orderData);
 
       const result = await TransactionAPI.processPayment(paymentRequest);
+      
+      console.log('Payment result:', result);
       
       if (result.success && result.data.code === 200) {
         setTransactionData(result.data.data);
@@ -140,11 +151,9 @@ export default function CheckoutPage() {
     } finally {
       setIsProcessing(false);
     }
-  };
-  const handlePurchase = async () => {
+  };  const handlePurchase = async () => {
     if (!packageData) return;
 
-    const userId = getUserIdFromToken();
     if (!userId) {
       toast.error('Unable to get user information. Please login again.');
       return;
@@ -162,6 +171,8 @@ export default function CheckoutPage() {
       console.log('Creating order with request:', orderRequest);
 
       const result = await OrderAPI.createOrder(orderRequest);
+      
+      console.log('Order creation result:', result);
       
       if (result.success && result.data.code === 200) {
         setOrderData(result.data.data);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { adminTemplateApi } from "@/lib/admin/template";
+import { adminTemplateApi } from "@/service/admin/template";
 
 const AdminTemplatesPage = () => {
   const [templates, setTemplates] = useState<any[]>([]);

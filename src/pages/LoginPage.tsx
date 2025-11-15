@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import MainLayout from '@/layouts/MainLayout';
 import { toast } from 'sonner';
-import { authAPI, handleAPIError, isNetworkError, tokenUtils } from '@/lib/api';
+import { authAPI, handleAPIError, isNetworkError, tokenUtils } from '@/service/api';
 
 /**
  * Login page with email and password authentication
